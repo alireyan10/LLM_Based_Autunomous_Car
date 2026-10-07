@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+
+from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
+
+
+def generate_launch_description():
+
+    pkg_share = FindPackageShare("car_bot")
+
+
+    # Gazebo + robot + controllers + RViz + twist_mux + twist_to_stamped
+    gazebo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [pkg_share, "launch", "gazebo_launch.py"]
+            )
+        ),
+        launch_arguments={
+            "gui": "true",
+            "rviz_config": PathJoinSubstitution(
+                [pkg_share, "config", "final.rviz"]
+            ),
+        }.items(),
+    )
+
+
+    # Localization (map_server + AMCL)
+    localization = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [pkg_share, "launch", "localization_launch.py"]
+            )
+        ),
+        launch_arguments={
+            "use_sim_time": "true",
+            "autostart": "true",
+            "map": "/home/reyan/case_study/room_map.yaml",
+        }.items(),
+    )
+
+
+    # Navigation (planner/controller/bt navigator)
+    navigation = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [pkg_share, "launch", "navigation_launch.py"]
+            )
+        ),
+        launch_arguments={
+            "use_sim_time": "true",
+            "autostart": "true",
+            "params_file": PathJoinSubstitution(
+                [pkg_share, "config", "nav2_params.yaml"]
+            ),
+        }.items(),
+    )
+
+
+    return LaunchDescription([
+
+        # Start Gazebo first
+        gazebo,
+
+        # Give robot/controller time to start
+        TimerAction(
+            period=10.0,
+            actions=[
+                localization
+            ]
+        ),
+
+        # Start Nav2 after AMCL/map
+        TimerAction(
+            period=15.0,
+            actions=[
+                navigation
+            ]
+        ),
+    ])

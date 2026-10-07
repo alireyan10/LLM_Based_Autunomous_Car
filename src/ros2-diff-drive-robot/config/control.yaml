@@ -1,0 +1,135 @@
+# Controller manager settings
+controller_manager:
+  ros__parameters:
+
+    # How often the controller manager updates the controllers (Hz)
+    update_rate: 10  # Hz
+
+    # Joint state broadcaster controller
+    joint_state_broadcaster:
+
+      # Type of controller used to publish joint states
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+
+# Differential drive robot controller
+diffbot_base_controller:
+  ros__parameters:
+
+    # Type of controller used for the differential-drive robot
+    type: diff_drive_controller/DiffDriveController
+
+    # Name of the left wheel joint
+    left_wheel_names: ["base_to_front_left_wheel"]
+
+    # Name of the right wheel joint
+    right_wheel_names: ["base_to_front_right_wheel"]
+
+    # Distance between the left and right wheels (meters)
+    wheel_separation: 0.4
+
+    # Number of wheels controlled by one signal on each side
+    # wheels_per_side: 1  # actually 2, but both are controlled by 1 signal
+
+    # Radius of the robot wheels (meters)
+    wheel_radius: 0.14
+
+    # Correction multiplier for the distance between wheels
+    wheel_separation_multiplier: 1.0
+
+    # Correction multiplier for the left wheel radius
+    left_wheel_radius_multiplier: 1.0
+
+    # Correction multiplier for the right wheel radius
+    right_wheel_radius_multiplier: 1.0
+
+    # Frequency at which controller publishes data (Hz)
+    publish_rate: 50.0
+
+    # Name of the odometry reference frame
+    odom_frame_id: odom
+
+    # Name of the robot base frame
+    base_frame_id: base_link
+
+    # Covariance values for robot position/orientation estimation
+    pose_covariance_diagonal : [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+
+    # Covariance values for robot velocity estimation
+    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+
+    # Use commanded velocity instead of measured wheel velocity for odometry
+    open_loop: true
+
+    # Publish the odometry TF: odom -> base_link
+    enable_odom_tf: true
+
+    # Stop the robot if no new velocity command arrives within this time (seconds)
+    cmd_vel_timeout: 0.5
+
+    # Publish the velocity after applying velocity limits
+    # publish_limited_velocity: true
+
+    # Number of velocity measurements used in the rolling window
+    # velocity_rolling_window_size: 10
+
+
+    # ==========================================
+    # Velocity and acceleration limits
+    # ==========================================
+
+    # Whether linear velocity limits are enabled
+    linear.x.has_velocity_limits: false
+
+    # Whether linear acceleration limits are enabled
+    linear.x.has_acceleration_limits: false
+
+    # Whether linear jerk limits are enabled
+    linear.x.has_jerk_limits: false
+
+    # Maximum forward linear velocity (m/s)
+    linear.x.max_velocity: 1.0
+
+    # Maximum backward linear velocity (m/s)
+    linear.x.min_velocity: -1.0
+
+    # Maximum linear acceleration (m/s²)
+    linear.x.max_acceleration: 1.0
+
+    # Maximum linear jerk (m/s³)
+    linear.x.max_jerk: 0.0
+
+    # Minimum linear jerk (m/s³)
+    linear.x.min_jerk: 0.0
+
+
+    # ==========================================
+    # Angular velocity and acceleration limits
+    # ==========================================
+
+    # Whether angular velocity limits are enabled
+    angular.z.has_velocity_limits: true
+
+    # Whether angular acceleration limits are enabled
+    angular.z.has_acceleration_limits: true
+
+    # Whether angular jerk limits are enabled
+    angular.z.has_jerk_limits: false
+
+    # Maximum angular velocity (rad/s)
+    angular.z.max_velocity: 1.0
+
+    # Minimum angular velocity (rad/s)
+    angular.z.min_velocity: -1.0
+
+    # Maximum angular acceleration (rad/s²)
+    angular.z.max_acceleration: 1.0
+
+    # Minimum angular acceleration (rad/s²)
+    angular.z.min_acceleration: -1.0
+
+    # Maximum angular jerk (rad/s³)
+    angular.z.max_jerk: 0.0
+
+    # Minimum angular jerk (rad/s³)
+    angular.z.min_jerk: 0.0

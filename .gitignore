@@ -1,0 +1,55 @@
+# ROS 2 generated files
+build/
+install/
+log/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor
+.vscode/
+
+# Backup files
+*.bak
+*.backup
+*.backup*
+*.swp
+
+# Temporary/test worlds
+small_house/small_house_backup.world
+small_house/small_house_before_include_conversion.world
+small_house/small_house_before_inertia_fix.world
+small_house/small_house.world.backup_before_sensor_plugin_fix
+small_house/small_house.world.backup_rtf
+small_house/test_world.world
+small_house/test_world_regex.world
+
+# Backup model directory
+small_house/models_backup_inertia/
+
+# Old/original model collection
+small_house/models/
+
+# Temporary test maps/scripts
+case_test.pgm
+case_test.yaml
+check_models.py
+check_world.py
+check_xml.py
+make_static.py
+make_static_regex.py
+modify_models_static.py
+
+# Archives
+small_house/small_house.zip
+# Python virtual environment
+.venv/
+
+# Large ML model weights
+*.safetensors
+# OS metadata
+.DS_Store
+
+# Backup files
+*.bak*

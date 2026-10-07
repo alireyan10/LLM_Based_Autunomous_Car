@@ -1,0 +1,194 @@
+slam_toolbox:
+  ros__parameters:
+
+    # Plugin params
+    # Selects the Ceres Solver plugin for SLAM optimization.
+    solver_plugin: solver_plugins::CeresSolver
+
+    # Selects the linear solver method used by Ceres.
+    ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+
+    # Selects the preconditioner method for the solver.
+    ceres_preconditioner: SCHUR_JACOBI
+
+    # Selects the trust-region optimization strategy.
+    ceres_trust_strategy: LEVENBERG_MARQUARDT
+
+    # Selects the Dogleg optimization method.
+    ceres_dogleg_type: TRADITIONAL_DOGLEG
+
+    # Specifies the loss function used to reduce the effect of outliers.
+    # None means no special loss function is applied.
+    ceres_loss_function: None
+
+
+    # ROS Parameters
+
+    # TF frame that represents the robot odometry coordinate system.
+    odom_frame: odom
+
+    # TF frame that represents the global map coordinate system.
+    map_frame: map
+
+    # TF frame that represents the robot base.
+    base_frame: base_footprint
+
+    # Laser scan topic used by SLAM Toolbox.
+    scan_topic: /scan
+
+    # Enables the map saver functionality.
+    use_map_saver: true
+
+    # Sets SLAM Toolbox to mapping mode.
+    # Use "localization" when using an existing map for localization.
+    mode: mapping #localization
+
+
+    # If you want to continue an existing map from a specific pose,
+    # you can specify the map file and starting pose below.
+    # These options are currently disabled.
+
+    # map_file_name: /home/safin/ros_ws/src/car_bot/map/serial_map
+    # map_start_pose: [0.0, 0.0, 0.0]
+    # map_start_at_dock: true
+
+
+    # Enables or disables detailed debug messages.
+    debug_logging: false
+
+    # Processes every scan.
+    # Higher values can reduce processing load by skipping scans.
+    throttle_scans: 1
+
+    # Time interval for publishing the map-to-odom transform.
+    # 0 means the transform will not be published.
+    transform_publish_period: 0.02 #if 0 never publishes odometry
+
+    # How often the map is updated.
+    map_update_interval: 5.0
+
+    # Resolution of the generated occupancy grid map in meters.
+    resolution: 0.05
+
+    # Maximum laser range used when creating the map.
+    max_laser_range: 20.0 #for rastering images
+
+    # Minimum time between processing scans.
+    minimum_time_interval: 0.5
+
+    # Maximum time allowed when waiting for a required TF transform.
+    transform_timeout: 0.2
+
+    # How long TF information is kept in the internal buffer.
+    tf_buffer_duration: 30.0
+
+    # Memory stack size allocated for SLAM processing.
+    # A larger value helps when working with large maps.
+    stack_size_to_use: 40000000 #// program needs a larger stack size to serialize large maps
+
+    # Enables interactive SLAM mode.
+    enable_interactive_mode: true
+
+
+    # General Parameters
+
+    # Enables scan matching between laser scans and the map.
+    use_scan_matching: true
+
+    # Uses the scan barycenter during scan matching.
+    use_scan_barycenter: true
+
+    # Minimum distance the robot must travel before processing a new scan.
+    minimum_travel_distance: 0.5
+
+    # Minimum rotation the robot must make before processing a new scan.
+    minimum_travel_heading: 0.5
+
+    # Number of scans stored in the scan buffer.
+    scan_buffer_size: 10
+
+    # Maximum distance of scans stored in the scan buffer.
+    scan_buffer_maximum_scan_distance: 10.0
+
+    # Minimum response required for fine link matching.
+    link_match_minimum_response_fine: 0.1
+
+    # Maximum distance used when searching for matching laser scans.
+    link_scan_maximum_distance: 1.5
+
+    # Maximum distance used for loop-closure search.
+    loop_search_maximum_distance: 3.0
+
+    # Enables loop closure detection.
+    # This helps correct accumulated mapping errors.
+    do_loop_closing: true
+
+    # Minimum number of scans/links required to form a loop closure chain.
+    loop_match_minimum_chain_size: 10
+
+    # Maximum allowed variance during coarse loop matching.
+    loop_match_maximum_variance_coarse: 3.0
+
+    # Minimum response required during coarse loop matching.
+    loop_match_minimum_response_coarse: 0.35
+
+    # Minimum response required during fine loop matching.
+    loop_match_minimum_response_fine: 0.45
+
+
+    # Correlation Parameters - Correlation Parameters
+
+    # Size of the search area used for scan correlation.
+    correlation_search_space_dimension: 0.5
+
+    # Resolution of the correlation search.
+    # Smaller value means finer search.
+    correlation_search_space_resolution: 0.01
+
+    # Controls the amount of smoothing applied to the correlation search.
+    correlation_search_space_smear_deviation: 0.1
+
+
+    # Correlation Parameters - Loop Closure Parameters
+
+    # Size of the search area used for loop closure.
+    loop_search_space_dimension: 8.0
+
+    # Resolution of the loop closure search.
+    loop_search_space_resolution: 0.05
+
+    # Controls smoothing of the loop closure search space.
+    loop_search_space_smear_deviation: 0.03
+
+
+    # Scan Matcher Parameters
+
+    # Penalty applied to differences in estimated distance.
+    distance_variance_penalty: 0.5
+
+    # Penalty applied to differences in estimated angle.
+    angle_variance_penalty: 1.0
+
+    # Fine angular search offset used during scan matching.
+    fine_search_angle_offset: 0.00349
+
+    # Coarse angular search offset used during scan matching.
+    coarse_search_angle_offset: 0.349
+
+    # Angular resolution used during coarse scan matching.
+    coarse_angle_resolution: 0.0349
+
+    # Minimum penalty applied to angular differences.
+    minimum_angle_penalty: 0.9
+
+    # Minimum penalty applied to distance differences.
+    minimum_distance_penalty: 0.5
+
+    # Enables response expansion when matching scans.
+    use_response_expansion: true
+
+    # Minimum number of scans that must pass through a matching area.
+    min_pass_through: 2
+
+    # Occupancy probability threshold used when determining occupied cells.
+    occupancy_threshold: 0.1

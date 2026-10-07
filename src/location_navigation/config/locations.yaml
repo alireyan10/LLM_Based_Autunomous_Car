@@ -1,0 +1,28 @@
+# Location database for the car_bot navigation system.
+# Each entry maps a named location to a map-frame pose.
+# yaw is in radians (0.0 = facing +X / east direction on the map).
+
+locations:
+  kitchen:
+    x: 8.35310077672363
+    y: -3.164842605592803
+    yaw: 0.0
+    frame_id: map
+
+  bedroom:
+    x: -5.168692588806152
+    y: -0.2632026672363281
+    yaw: 0.0
+    frame_id: map
+
+  tv:
+    x: 1.7489373683929443
+    y: -3.8614234924316406
+    yaw: 0.0
+    frame_id: map
+
+  dining_table:
+    x: 5.920836448669434
+    y: 0.6124114990234375
+    yaw: 0.0
+    frame_id: map
