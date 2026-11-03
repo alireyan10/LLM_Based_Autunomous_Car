@@ -34,6 +34,10 @@ setup(
             'navigation_client = location_navigation.navigation_client:main',
             # LLM JSON → Nav2 bridge (primary entry point)
             'llm_to_nav = location_navigation.llm_to_nav:main',
+            # Natural language command node
+            'llm_command_node = location_navigation.llm_command_node:main',
+            # Sequential action executor standalone / ROS 2 entry point
+            'sequential_executor = location_navigation.sequential_executor:main',
         ],
     },
 )
