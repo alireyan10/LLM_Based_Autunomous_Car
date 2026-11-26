@@ -26,6 +26,7 @@
   <exec_depend>slam_toolbox</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>twist_mux</exec_depend>
+  <exec_depend>new_car_description</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>

@@ -1,0 +1,201 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Materials -->
+  <material name="robot_silver">
+    <color rgba="0.79215686 0.81960784 0.93333333 1.0"/>
+  </material>
+  <material name="wheel_dark">
+    <color rgba="0.2 0.2 0.2 1.0"/>
+  </material>
+  <material name="lidar_black">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+
+  <!-- Base Footprint (Ground plane projection per REP-120) -->
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <!-- Drive wheel radius is 0.0215 m (21.5 mm). Axle is at z = +0.0215 m above ground -->
+    <origin xyz="0 0 0.0215" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Base Link (Chassis with origin at drive axle center) -->
+  <link name="base_link">
+    <inertial>
+      <!-- Centroid computed directly from 3D chassis mesh in ROS frame -->
+      <origin xyz="0.037679 0.000333 0.028428" rpy="0 0 0"/>
+      <mass value="0.34846229"/>
+      <inertia
+        ixx="0.00210416"
+        ixy="-5.52108e-07"
+        ixz="-6.47231e-05"
+        iyy="0.00202141"
+        iyz="1.19542e-06"
+        izz="0.00354507"/>
+    </inertial>
+    <visual>
+      <!-- Mesh origin in base_link (ROS frame) -->
+      <origin xyz="0.164056 -0.02623 0.15407" rpy="3.141593 0 -1.509022"/>
+      <geometry>
+        <mesh filename="package://new_car_description/meshes/base_link.STL"/>
+      </geometry>
+      <material name="robot_silver"/>
+    </visual>
+    <!-- Simplified box collision representing chassis body above ground plane (clearance: 11.5 mm) -->
+    <collision>
+      <origin xyz="0.049 0.0 0.030" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.250 0.245 0.080"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Left Wheel (Located at +Y in ROS standard coordinates) -->
+  <link name="left_wheel_link">
+    <inertial>
+      <origin xyz="0 -0.004845 0" rpy="0 0 0"/>
+      <mass value="0.01619856"/>
+      <inertia
+        ixx="2.12733e-06"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="3.46967e-06"
+        iyz="0.0"
+        izz="2.12682e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://new_car_description/meshes/left.STL"/>
+      </geometry>
+      <material name="wheel_dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 -0.005 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.0215" length="0.020"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <origin xyz="0.0 0.130315 0.0" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="left_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="10.0" velocity="50.0"/>
+    <dynamics damping="0.01" friction="0.01"/>
+  </joint>
+
+  <!-- Right Wheel (Located at -Y in ROS standard coordinates) -->
+  <link name="right_wheel_link">
+    <inertial>
+      <origin xyz="0 0.005841 0" rpy="0 0 0"/>
+      <mass value="0.01619870"/>
+      <inertia
+        ixx="2.12881e-06"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="3.46962e-06"
+        iyz="0.0"
+        izz="2.12538e-06"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://new_car_description/meshes/right.STL"/>
+      </geometry>
+      <material name="wheel_dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0.005 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.0215" length="0.020"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <origin xyz="0.0 -0.130315 0.0" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="right_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="10.0" velocity="50.0"/>
+    <dynamics damping="0.01" friction="0.01"/>
+  </joint>
+
+  <!-- Caster Wheel (Located in front of drive axle, coplanar ground contact) -->
+  <link name="caster_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.00361668"/>
+      <inertia
+        ixx="1.89367e-07"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="3.23482e-07"
+        iyz="0.0"
+        izz="1.88841e-07"/>
+    </inertial>
+    <visual>
+      <!-- Visual offset aligned with CAD assembly -->
+      <origin xyz="0 0 -0.0111" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://new_car_description/meshes/caster.STL"/>
+      </geometry>
+      <material name="robot_silver"/>
+    </visual>
+    <!-- Collision sphere: radius 0.0127 m, center at z = -0.0088 m so bottom contacts at z = -0.0215 m (ground plane) -->
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.0127"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Fixed joint holding caster ball so its bottom lies in the exact same ground plane as drive wheels -->
+  <joint name="caster_joint" type="fixed">
+    <origin xyz="0.162941 0.002734 -0.0088" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="caster_link"/>
+  </joint>
+
+  <!-- LiDAR Sensor -->
+  <link name="lidar_link">
+    <inertial>
+      <origin xyz="0 0 0.0205" rpy="0 0 0"/>
+      <mass value="0.16537044"/>
+      <inertia
+        ixx="7.72287e-05"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="7.72287e-05"
+        iyz="0.0"
+        izz="0.00010995"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.0205" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <mesh filename="package://new_car_description/meshes/lidar.STL"/>
+      </geometry>
+      <material name="lidar_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.0205" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.038" length="0.041"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="lidar_joint" type="fixed">
+    <origin xyz="0.108564 0.000481 0.110716" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+  </joint>
+
+</robot>

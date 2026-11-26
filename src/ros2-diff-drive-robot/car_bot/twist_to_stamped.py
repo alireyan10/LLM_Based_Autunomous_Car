@@ -32,6 +32,19 @@ class TwistToStamped(Node):
             10
         )
 
+        # Also support bridging unstamped /cmd_vel_unstamped -> /cmd_vel (TwistStamped)
+        self.manual_unstamped_sub = self.create_subscription(
+            Twist,
+            '/cmd_vel_unstamped',
+            self.manual_unstamped_callback,
+            10
+        )
+        self.manual_stamped_pub = self.create_publisher(
+            TwistStamped,
+            '/cmd_vel',
+            10
+        )
+
         self.get_logger().info(
             f'Converting {input_topic} (Twist) -> {output_topic} (TwistStamped)'
         )
@@ -40,11 +53,21 @@ class TwistToStamped(Node):
         stamped = TwistStamped()
 
         stamped.header.stamp = self.get_clock().now().to_msg()
-        stamped.header.frame_id = self.frame_id
+        stamped.header.frame_id = self.frame_id or 'base_link'
 
         stamped.twist = msg
 
         self.publisher.publish(stamped)
+
+    def manual_unstamped_callback(self, msg: Twist):
+        stamped = TwistStamped()
+
+        stamped.header.stamp = self.get_clock().now().to_msg()
+        stamped.header.frame_id = self.frame_id or 'base_link'
+
+        stamped.twist = msg
+
+        self.manual_stamped_pub.publish(stamped)
 
 
 def main(args=None):

@@ -1,0 +1,14 @@
+# Input topics handled/muxed by twist_mux for new_car_description.
+# Higher priority topics preempt lower priority topics.
+twist_mux:
+  ros__parameters:
+    topics:
+      navigation:
+        topic   : cmd_vel_nav_stamped
+        timeout : 0.5
+        priority: 10
+
+      keyboard:
+        topic   : cmd_vel
+        timeout : 0.5
+        priority: 100

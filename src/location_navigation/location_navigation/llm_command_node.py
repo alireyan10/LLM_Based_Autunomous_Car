@@ -13,6 +13,18 @@ import subprocess
 
 def process_command(command):
     print(f"\nProcessing command: {command}")
+
+    # Check for Agent Target Query (e.g. "Where is the table?", "রান্নাঘর কোথায়?")
+    cmd_lower = command.strip().lower()
+    is_target_query = any(w in cmd_lower for w in ["where is", "where's", "find", "locate", "কোথায়", "কোথায়", "কোন দিকে"])
+    if is_target_query:
+        try:
+            from location_navigation.agent_target_query import query_and_select_target
+            query_res = query_and_select_target(command)
+            if query_res is not None:
+                return
+        except Exception as e:
+            print(f"[llm_command_node] Target query resolution error: {e}")
     
     qwen_python = os.path.expanduser("~/case_study/llm/QWEN_LINUX_TRANSFER/.venv/bin/python")
     inference_script = os.path.expanduser("~/case_study/src/location_navigation/location_navigation/qwen_inference.py")

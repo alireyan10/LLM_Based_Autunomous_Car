@@ -269,6 +269,16 @@ def main(args=None):
         use_sim = detect_use_sim_time()
         nav_client = NavigationClient(use_sim_time=use_sim)
 
+        # Notify /selected_target so RViz2 and visualization highlight this goal
+        try:
+            from std_msgs.msg import String as RosString
+            sel_pub = nav_client.create_publisher(RosString, '/selected_target', 10)
+            sel_msg = RosString()
+            sel_msg.data = canonical_target
+            sel_pub.publish(sel_msg)
+        except Exception:
+            pass
+
         if not nav_client.wait_for_server(timeout_sec=15.0):
             nav_client.destroy_node()
             rclpy.shutdown()

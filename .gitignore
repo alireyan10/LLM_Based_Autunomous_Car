@@ -53,3 +53,23 @@ small_house/small_house.zip
 
 # Backup files
 *.bak*
+
+# Python virtual environments
+voice_env/
+venv/
+env/
+
+# Generated output
+output/
+
+# Python cache
+*.pyo
+
+# Temporary files
+*.tmp
+*.swp
+
+# Large model files
+*.safetensors
+*.bin
+*.gguf

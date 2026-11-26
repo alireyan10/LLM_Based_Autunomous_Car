@@ -187,3 +187,253 @@ Performance testing in the `small_house` world revealed severe physics bottlenec
 - **Map**: WORKING
 - **Localization**: WORKING
 - **RTF**: approximately 1.0
+
+---
+
+## 21. Docker Development Environment & Portability Guide
+
+### 21.1 Overview & Architecture
+The project provides a fully self-contained, portable Docker environment built on **Ubuntu 24.04** and **ROS 2 Jazzy Desktop**, integrating:
+- **Gazebo Harmonic** (`ros_gz_sim`, `ros_gz_bridge`, `ros_gz_image`)
+- **Nav2 & SLAM Toolbox** (`navigation2`, `nav2_bringup`, `slam_toolbox`)
+- **ros2_control** (`controller_manager`, `diff_drive_controller`, `joint_state_broadcaster`, `gz_ros2_control`)
+- **Voice Navigation Pipeline** (FFmpeg, PyAudio, SpeechRecognition with Google bn-BD STT)
+- **Qwen LLM Interface** (PyTorch, Hugging Face Transformers, PEFT, bitsandbytes)
+- **GUI Pass-through** for Gazebo GUI and RViz2 via X11 socket forwarding
+- **Hardware Acceleration** for AMD/Intel/NVIDIA DRI graphics, with automatic CPU Mesa fallback
+- **External Volume Mounting** to keep large LLM weights (~5.8 GB) outside the Docker image layers
+
+### 21.2 File Roles
+- `Dockerfile`: Multi-layer optimized build installing ROS 2 Jazzy, Nav2, SLAM, Gazebo Harmonic, audio, and Python dependencies.
+- `docker-compose.yml`: Configures container mounts (`/workspace`, `/tmp/.X11-unix`, `/dev/dri`, `/dev/snd`, `~/.cache/huggingface`), host networking, display variables, and optional NVIDIA profiles.
+- `.dockerignore`: Excludes host build caches (`build/`, `install/`, `log/`, `voice_env/`, `.venv/`, `.git/`, `.vscode/`, `*.zip`, `*.safetensors`) from blowing up the Docker build context.
+- `entrypoint.sh`: Auto-sources `/opt/ros/jazzy/setup.bash`, sources `/workspace/install/setup.bash` (if built), sets `GZ_SIM_RESOURCE_PATH`, creates backward-compatibility symlinks, and executes commands.
+
+---
+
+### 21.3 Host Prerequisites (Any Ubuntu 24.04 Laptop)
+Before running Docker on the host laptop:
+
+1. **Install Docker Engine & Docker Compose Plugin**:
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y ca-certificates curl gnupg
+   sudo install -m 0755 -d /etc/apt/keyrings
+   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+   sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+   echo \
+     "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+     $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+     sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+   sudo apt-get update
+   sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+   ```
+
+2. **Add User to Docker Group** (avoid running Docker with sudo):
+   ```bash
+   sudo usermod -aG docker $USER
+   newgrp docker
+   ```
+
+3. **Grant X11 Display Access for GUI (Gazebo & RViz2)**:
+   ```bash
+   xhost +local:root
+   ```
+   *(To persist across reboots, add `xhost +local:root > /dev/null 2>&1` to `~/.bashrc`)*.
+
+---
+
+### 21.4 Building and Running via Docker Compose
+
+1. **Build the Docker Image**:
+   ```bash
+   cd ~/case_study
+   docker compose build
+   ```
+   *Note: For an NVIDIA GPU laptop with NVIDIA Container Toolkit, build with CUDA PyTorch:*
+   ```bash
+   docker compose build --build-arg TORCH_DEVICE=cuda
+   ```
+
+2. **Start an Interactive Container Shell**:
+   ```bash
+   # Standard DRI / CPU fallback container
+   docker compose run --rm robot_dev bash
+
+   # Or NVIDIA GPU accelerated container (if nvidia-container-toolkit is installed)
+   docker compose --profile nvidia run --rm robot_dev_nvidia bash
+   ```
+
+---
+
+### 21.5 Building ROS 2 Packages Inside the Container
+Once inside the `/workspace` container shell:
+```bash
+# 1. Check and install any missing rosdep dependencies
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y
+
+# 2. Build the workspace
+colcon build --symlink-install
+
+# 3. Source the freshly built workspace overlay
+source install/setup.bash
+```
+
+---
+
+### 21.6 Launching Simulation & Navigation Inside Docker
+
+#### Option A: Full GUI Simulation (Gazebo + AMCL + Nav2 + RViz2)
+Ensure `xhost +local:root` was executed on the host, then inside the container run:
+```bash
+ros2 launch car_bot final_launch.py \
+  map:=/workspace/room_map.yaml \
+  world:=/workspace/small_house/small_house.world \
+  use_sim_time:=true
+```
+
+#### Option B: Headless Simulation (Server-Only, No Display Required)
+If running remotely or verifying without an active monitor:
+```bash
+ros2 launch car_bot gazebo_launch.py gui:=false
+```
+
+#### Option C: Teleoperation
+Open a second terminal on the host, enter the running container, and run:
+```bash
+docker exec -it car_bot_dev_container bash
+source install/setup.bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true
+```
+
+---
+
+### 21.7 Running Voice Navigation and Qwen LLM Inside Docker
+
+1. **Audio Device Access**:
+   `/dev/snd` is passed directly from host to container in `docker-compose.yml`. Verify recording devices inside the container:
+   ```bash
+   arecord -l
+   ```
+
+2. **Run Bangla Voice Command Node**:
+   ```bash
+   ros2 run location_navigation voice_command_node
+   ```
+
+3. **Run LLM Navigation Action Dispatcher**:
+   ```bash
+   ros2 run location_navigation llm_to_nav '{"intent":"MOVE_TO_TARGET","target":"table"}'
+   ```
+
+4. **Run Regression & Verification Test Suite**:
+   ```bash
+   python3 /workspace/llm/QWEN_LINUX_TRANSFER/test_regression.py
+   ```
+
+---
+
+### 21.8 VS Code Live Development Workflow
+The workspace directory is mounted live at `/workspace`:
+- Source code in `src/` can be edited directly on the host using **VS Code**, Sublime, or any IDE.
+- Changes are immediately reflected inside the container without rebuilding the Docker image.
+- To rebuild modified packages inside the container:
+  ```bash
+  colcon build --packages-select <package_name> --symlink-install
+  source install/setup.bash
+  ```
+
+---
+
+### 21.9 Adding New ROS 2 Packages
+To add a new ROS 2 package:
+1. Create or clone the package into `src/` on the host:
+   ```bash
+   cd ~/case_study/src
+   ros2 pkg create --build-type ament_python my_new_pkg
+   ```
+2. Enter the container and install dependencies:
+   ```bash
+   docker exec -it car_bot_dev_container bash
+   rosdep install --from-paths src --ignore-src -r -y
+   ```
+3. Build and test:
+   ```bash
+   colcon build --packages-select my_new_pkg --symlink-install
+   source install/setup.bash
+   ```
+
+---
+
+### 21.10 GPU Acceleration and CPU Fallback
+
+| Mode | Configuration | Command |
+|------|---------------|---------|
+| **AMD / Intel / Mesa GPU** | Uses `/dev/dri` passthrough | `docker compose run --rm robot_dev bash` |
+| **NVIDIA GPU** | Uses `nvidia-container-toolkit` | `docker compose --profile nvidia run --rm robot_dev_nvidia bash` |
+| **CPU Fallback** | Software rasterizer (no GPU needed) | `LIBGL_ALWAYS_SOFTWARE=1 docker compose run --rm robot_dev bash` |
+
+---
+
+### 21.11 Transfer Workflow to Another Laptop (Offline / USB / LAN)
+
+To transfer the entire environment to another Ubuntu 24.04 laptop:
+
+#### On Source Laptop (Current Machine):
+1. **Save Docker Image to Compressed Archive**:
+   ```bash
+   docker save car_bot_dev:latest | gzip > ~/car_bot_dev_image.tar.gz
+   ```
+
+2. **Bundle the Workspace (Excluding Build/Install Caches)**:
+   ```bash
+   cd ~
+   tar --exclude='case_study/build' \
+       --exclude='case_study/install' \
+       --exclude='case_study/log' \
+       --exclude='case_study/voice_env' \
+       --exclude='case_study/llm/QWEN_LINUX_TRANSFER/.venv' \
+       -czvf ~/case_study_workspace.tar.gz case_study/
+   ```
+
+3. **Copy to External USB Drive or SCP**:
+   ```bash
+   # Example via USB drive:
+   cp ~/car_bot_dev_image.tar.gz /media/$USER/USB_DRIVE/
+   cp ~/case_study_workspace.tar.gz /media/$USER/USB_DRIVE/
+   ```
+
+#### On Destination Laptop (New Machine):
+1. **Install Docker Engine on Destination** (refer to Section 21.3).
+2. **Copy Files from USB Drive to Home Directory**:
+   ```bash
+   cp /media/$USER/USB_DRIVE/car_bot_dev_image.tar.gz ~/
+   cp /media/$USER/USB_DRIVE/case_study_workspace.tar.gz ~/
+   ```
+3. **Extract the Workspace**:
+   ```bash
+   cd ~
+   tar -xzvf case_study_workspace.tar.gz
+   cd ~/case_study
+   ```
+4. **Load the Docker Image**:
+   ```bash
+   docker load < ~/car_bot_dev_image.tar.gz
+   ```
+5. **Grant X11 GUI Access & Run**:
+   ```bash
+   xhost +local:root
+   docker compose run --rm robot_dev bash
+   ```
+6. **Build and Launch**:
+   ```bash
+   colcon build --symlink-install
+   source install/setup.bash
+   ros2 launch car_bot final_launch.py \
+     map:=/workspace/room_map.yaml \
+     world:=/workspace/small_house/small_house.world \
+     use_sim_time:=true
+   ```

@@ -1,0 +1,46 @@
+# Build, install and log artifacts
+build/
+install/
+log/
+
+# Virtual environments
+voice_env/
+.venv/
+**/venv/
+**/.venv/
+
+# Large model weights and cache
+llm/QWEN_LINUX_TRANSFER/.venv/
+*.safetensors
+*.bin
+*.pt
+*.pth
+.cache/
+
+# Version control & IDE
+.git/
+.gitignore
+.vscode/
+
+# Python cache & compiled files
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Backup files
+*.bak
+*.bak*
+*.backup
+*.backup*
+*.swp
+
+# Redundant large archives and photos
+small_house/*.zip
+small_house/photos/
+*.tar
+*.tar.gz
+
+# OS metadata
+.DS_Store

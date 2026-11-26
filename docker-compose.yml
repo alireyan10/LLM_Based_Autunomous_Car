@@ -1,0 +1,50 @@
+services:
+  robot_dev:
+    image: car_bot_dev:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TORCH_DEVICE: cpu # Change to 'cuda' if building on an NVIDIA GPU laptop with nvidia-container-toolkit
+    container_name: car_bot_dev_container
+    stdin_open: true
+    tty: true
+    network_mode: host
+    ipc: host
+    privileged: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - GZ_SIM_RESOURCE_PATH=/workspace/small_house/models_static_test:/workspace/small_house:/workspace/small_house/maps
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      # Fallback for CPU rendering if GPU DRI is unavailable
+      - LIBGL_ALWAYS_SOFTWARE=${LIBGL_ALWAYS_SOFTWARE:-0}
+    volumes:
+      # Live workspace mount (enables VS Code editing on host with live reflection in container)
+      - .:/workspace:rw
+      # X11 GUI Socket forwarding
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${XAUTHORITY:-${HOME}/.Xauthority}:/root/.Xauthority:ro
+      # GPU Hardware Acceleration (DRI passthrough for AMD / Intel / Mesa)
+      - /dev/dri:/dev/dri:rw
+      # Audio device passthrough for microphone and voice processing
+      - /dev/snd:/dev/snd:rw
+      # HuggingFace cache mounted from host to keep large model weights outside the container
+      - ${HOME}/.cache/huggingface:/root/.cache/huggingface:rw
+    working_dir: /workspace
+
+  # NVIDIA GPU profile (use via: docker compose --profile nvidia run robot_dev_nvidia bash)
+  robot_dev_nvidia:
+    extends:
+      service: robot_dev
+    container_name: car_bot_nvidia_container
+    profiles:
+      - nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

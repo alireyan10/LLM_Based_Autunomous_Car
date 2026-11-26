@@ -17,9 +17,9 @@ setup(
         # Launch files
         (os.path.join('share', package_name, 'launch'),
             glob('launch/*.py')),
-        # Config / YAML files
+        # Config / YAML / RViz files
         (os.path.join('share', package_name, 'config'),
-            glob('config/*.yaml')),
+            glob('config/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -38,6 +38,12 @@ setup(
             'llm_command_node = location_navigation.llm_command_node:main',
             # Sequential action executor standalone / ROS 2 entry point
             'sequential_executor = location_navigation.sequential_executor:main',
+            # Bangla voice navigation node
+            'voice_command_node = location_navigation.voice_command_node:main',
+            # Target visualization and PNG generation nodes
+            'target_visualization_node = location_navigation.target_visualization_node:main',
+            'map_png_generator = location_navigation.map_png_generator:main',
+            'agent_target_query = location_navigation.agent_target_query:main',
         ],
     },
 )
